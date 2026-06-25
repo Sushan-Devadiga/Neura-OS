@@ -460,15 +460,15 @@ function Landing() {
             <div className="mt-2 text-display text-2xl font-semibold">Good evening, Alex.</div>
             <div className="mt-4 text-[13px] text-muted-foreground">Today you completed:</div>
             <div className="mt-2 space-y-1.5 text-[13px]">
-              {[
-                ["12", "Tasks", CheckCircle2, "ai-green"],
-                ["4", "Meetings", Calendar, "ai-blue"],
-                ["23", "Memories captured", Brain, "ai-orange"],
-              ].map(([n, l, Icn, c]) => (
-                <div key={l as string} className="flex items-center gap-2.5">
-                  {(() => { const I = Icn as typeof CheckCircle2; return <I className="h-3.5 w-3.5" style={{ color: `var(--color-${c})` }} />; })()}
+              {([
+                { n: "12", l: "Tasks", I: CheckCircle2, c: "ai-green" },
+                { n: "4", l: "Meetings", I: Calendar, c: "ai-blue" },
+                { n: "23", l: "Memories captured", I: Brain, c: "ai-orange" },
+              ]).map(({ n, l, I, c }) => (
+                <div key={l} className="flex items-center gap-2.5">
+                  <I className="h-3.5 w-3.5" style={{ color: `var(--color-${c})` }} />
                   <span className="font-semibold text-foreground tabular-nums">{n}</span>
-                  <span className="text-muted-foreground">{l as string}</span>
+                  <span className="text-muted-foreground">{l}</span>
                 </div>
               ))}
             </div>
