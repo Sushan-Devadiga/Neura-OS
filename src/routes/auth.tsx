@@ -47,12 +47,28 @@ function AuthPage() {
         if (error) throw error;
         toast.success("Check your email to confirm — or sign in if email confirmation is off.");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          console.error("[Auth] Sign-in failed:", error.message, error);
+          // Supabase returns "Invalid login credentials" for wrong email/password
+          const isInvalidCreds =
+            error.message?.toLowerCase().includes("invalid") ||
+            error.message?.toLowerCase().includes("credentials") ||
+            error.status === 400;
+          toast.error(isInvalidCreds ? "Invalid email or password." : "Something went wrong. Please try again.");
+          return;
+        }
+        if (!data.session) {
+          console.error("[Auth] Sign-in returned no session");
+          toast.error("Something went wrong. Please try again.");
+          return;
+        }
         navigate({ to: "/dashboard" });
       }
     } catch (err: any) {
-      toast.error(err.message ?? "Something went wrong");
+      // Network errors or unexpected exceptions
+      console.error("[Auth] Unexpected error:", err);
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
