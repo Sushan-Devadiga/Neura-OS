@@ -23,7 +23,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"signin" | "signup">("signin");
+  const [tab, setTab] = useState<"signin" | "signup" | "forgot">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -39,6 +39,15 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
+      if (tab === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/update-password`,
+        });
+        if (error) throw error;
+        toast.success("Password reset link sent! Check your email.");
+        setTab("signin");
+        return;
+      }
       if (tab === "signup") {
         const { error } = await supabase.auth.signUp({
           email, password,
@@ -66,9 +75,8 @@ function AuthPage() {
         navigate({ to: "/dashboard" });
       }
     } catch (err: any) {
-      // Network errors or unexpected exceptions
       console.error("[Auth] Unexpected error:", err);
-      toast.error("Something went wrong. Please try again.");
+      toast.error(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -120,10 +128,10 @@ function AuthPage() {
           <div className="lg:hidden mb-8"><Link to="/"><Logo /></Link></div>
 
           <h1 className="text-display text-2xl font-semibold">
-            {tab === "signin" ? "Sign in to NeuraOS" : "Create your workspace"}
+            {tab === "signin" ? "Sign in to NeuraOS" : tab === "signup" ? "Create your workspace" : "Reset your password"}
           </h1>
           <p className="mt-1.5 text-[13px] text-muted-foreground">
-            {tab === "signin" ? "Welcome back — let's get you back in." : "Start your AI-native workspace in seconds."}
+            {tab === "signin" ? "Welcome back — let's get you back in." : tab === "signup" ? "Start your AI-native workspace in seconds." : "We'll send you a link to reset your password."}
           </p>
 
           <Button
@@ -147,8 +155,8 @@ function AuthPage() {
 
           <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
             <TabsList className="grid w-full grid-cols-2 bg-surface/60">
-              <TabsTrigger value="signin">Sign in</TabsTrigger>
-              <TabsTrigger value="signup">Sign up</TabsTrigger>
+              <TabsTrigger value="signin" onClick={() => setTab("signin")}>Sign in</TabsTrigger>
+              <TabsTrigger value="signup" onClick={() => setTab("signup")}>Sign up</TabsTrigger>
             </TabsList>
 
             <form onSubmit={onEmail} className="mt-5 space-y-3.5">
@@ -166,20 +174,33 @@ function AuthPage() {
                     placeholder="you@neuraos.ai" className="pl-9" />
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-[12px]">Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input id="password" type="password" required minLength={6} value={password}
-                    onChange={(e)=>setPassword(e.target.value)} placeholder="••••••••" className="pl-9" />
+              {tab !== "forgot" && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-[12px]">Password</Label>
+                    {tab === "signin" && (
+                      <button
+                        type="button"
+                        onClick={() => setTab("forgot")}
+                        className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Forgot password?
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input id="password" type="password" required minLength={6} value={password}
+                      onChange={(e)=>setPassword(e.target.value)} placeholder="••••••••" className="pl-9" />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <Button type="submit" disabled={loading}
                 className="w-full h-10 gradient-signature animate-gradient text-white border-0 shadow-[0_0_24px_-6px_rgba(122,90,248,0.7)]">
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (
                   <>
-                    {tab === "signin" ? "Sign in" : "Create workspace"}
+                    {tab === "signin" ? "Sign in" : tab === "signup" ? "Create workspace" : "Send reset link"}
                     <ArrowRight className="h-4 w-4 ml-1.5" />
                   </>
                 )}

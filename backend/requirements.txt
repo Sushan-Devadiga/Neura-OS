@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+supabase
+google-generativeai
+pydantic
+python-dotenv
+
+sentence-transformers
+pypdf
+python-docx
+langchain-text-splitters
+httpx
+openai

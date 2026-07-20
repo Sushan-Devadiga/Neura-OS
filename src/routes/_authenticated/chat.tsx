@@ -1,9 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ModulePage, ModuleHeader, ComingSoon } from "@/components/os/ModulePage";
+import { ModulePage, ModuleHeader } from "@/components/os/ModulePage";
+import { ChatInterface } from "@/components/chat/ChatInterface";
 
 export const Route = createFileRoute("/_authenticated/chat")({ component: Page });
 
 function Page() {
+  // Use a default project ID for the global chat. 
+  // In a real app, this might come from a context or standard settings.
+  const DEFAULT_PROJECT = "00000000-0000-0000-0000-000000000000";
+
   return (
     <ModulePage>
       <ModuleHeader
@@ -12,19 +17,10 @@ function Page() {
         description="Multi-model streaming chat wired to your memory, knowledge graph, and agents."
         hue="ai-purple"
       />
-      <ComingSoon
-        module="Chat"
-        hue="ai-purple"
-        description="Next: streaming responses via Lovable AI Gateway, threaded conversations, model picker (Gemini 3, GPT-5.x), and inline tool calls."
-        features={[
-          "Streaming responses (Gemini 3 Flash default)",
-          "Threaded conversations with URL routing",
-          "Inline tool calls and agent handoffs",
-          "Full memory + knowledge graph context",
-          "File and image attachments",
-          "Voice input and TTS playback",
-        ]}
-      />
+      
+      <div className="flex-1 mt-6">
+        <ChatInterface projectId={DEFAULT_PROJECT} />
+      </div>
     </ModulePage>
   );
 }

@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UpdatePasswordRouteImport } from './routes/update-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -17,6 +18,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
 import { Route as AuthenticatedPromptsRouteImport } from './routes/_authenticated/prompts'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedNotesRouteImport } from './routes/_authenticated/notes'
 import { Route as AuthenticatedMemoryRouteImport } from './routes/_authenticated/memory'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
@@ -31,7 +33,14 @@ import { Route as AuthenticatedBrowserRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAutomationRouteImport } from './routes/_authenticated/automation'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAgentsRouteImport } from './routes/_authenticated/agents'
+import { Route as AuthenticatedProjectsIndexRouteImport } from './routes/_authenticated/projects.index'
+import { Route as AuthenticatedProjectsProjectIdRouteImport } from './routes/_authenticated/projects.$projectId'
 
+const UpdatePasswordRoute = UpdatePasswordRouteImport.update({
+  id: '/update-password',
+  path: '/update-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -69,6 +78,11 @@ const AuthenticatedPromptsRoute = AuthenticatedPromptsRouteImport.update({
 const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedNotesRoute = AuthenticatedNotesRouteImport.update({
@@ -142,10 +156,23 @@ const AuthenticatedAgentsRoute = AuthenticatedAgentsRouteImport.update({
   path: '/agents',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProjectsIndexRoute =
+  AuthenticatedProjectsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedProjectsRoute,
+  } as any)
+const AuthenticatedProjectsProjectIdRoute =
+  AuthenticatedProjectsProjectIdRouteImport.update({
+    id: '/$projectId',
+    path: '/$projectId',
+    getParentRoute: () => AuthenticatedProjectsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/update-password': typeof UpdatePasswordRoute
   '/agents': typeof AuthenticatedAgentsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/automation': typeof AuthenticatedAutomationRoute
@@ -160,15 +187,19 @@ export interface FileRoutesByFullPath {
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/memory': typeof AuthenticatedMemoryRoute
   '/notes': typeof AuthenticatedNotesRoute
-  '/projects': typeof AuthenticatedProjectsRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/projects': typeof AuthenticatedProjectsRouteWithChildren
   '/prompts': typeof AuthenticatedPromptsRoute
   '/search': typeof AuthenticatedSearchRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tasks': typeof AuthenticatedTasksRoute
+  '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
+  '/projects/': typeof AuthenticatedProjectsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/update-password': typeof UpdatePasswordRoute
   '/agents': typeof AuthenticatedAgentsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/automation': typeof AuthenticatedAutomationRoute
@@ -183,17 +214,20 @@ export interface FileRoutesByTo {
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/memory': typeof AuthenticatedMemoryRoute
   '/notes': typeof AuthenticatedNotesRoute
-  '/projects': typeof AuthenticatedProjectsRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/prompts': typeof AuthenticatedPromptsRoute
   '/search': typeof AuthenticatedSearchRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tasks': typeof AuthenticatedTasksRoute
+  '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
+  '/projects': typeof AuthenticatedProjectsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/update-password': typeof UpdatePasswordRoute
   '/_authenticated/agents': typeof AuthenticatedAgentsRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/automation': typeof AuthenticatedAutomationRoute
@@ -208,17 +242,21 @@ export interface FileRoutesById {
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
   '/_authenticated/memory': typeof AuthenticatedMemoryRoute
   '/_authenticated/notes': typeof AuthenticatedNotesRoute
-  '/_authenticated/projects': typeof AuthenticatedProjectsRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/projects': typeof AuthenticatedProjectsRouteWithChildren
   '/_authenticated/prompts': typeof AuthenticatedPromptsRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
+  '/_authenticated/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
+  '/_authenticated/projects/': typeof AuthenticatedProjectsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
+    | '/update-password'
     | '/agents'
     | '/analytics'
     | '/automation'
@@ -233,15 +271,19 @@ export interface FileRouteTypes {
     | '/knowledge'
     | '/memory'
     | '/notes'
+    | '/profile'
     | '/projects'
     | '/prompts'
     | '/search'
     | '/settings'
     | '/tasks'
+    | '/projects/$projectId'
+    | '/projects/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/update-password'
     | '/agents'
     | '/analytics'
     | '/automation'
@@ -256,16 +298,19 @@ export interface FileRouteTypes {
     | '/knowledge'
     | '/memory'
     | '/notes'
-    | '/projects'
+    | '/profile'
     | '/prompts'
     | '/search'
     | '/settings'
     | '/tasks'
+    | '/projects/$projectId'
+    | '/projects'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/update-password'
     | '/_authenticated/agents'
     | '/_authenticated/analytics'
     | '/_authenticated/automation'
@@ -280,21 +325,32 @@ export interface FileRouteTypes {
     | '/_authenticated/knowledge'
     | '/_authenticated/memory'
     | '/_authenticated/notes'
+    | '/_authenticated/profile'
     | '/_authenticated/projects'
     | '/_authenticated/prompts'
     | '/_authenticated/search'
     | '/_authenticated/settings'
     | '/_authenticated/tasks'
+    | '/_authenticated/projects/$projectId'
+    | '/_authenticated/projects/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  UpdatePasswordRoute: typeof UpdatePasswordRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/update-password': {
+      id: '/update-password'
+      path: '/update-password'
+      fullPath: '/update-password'
+      preLoaderRoute: typeof UpdatePasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -349,6 +405,13 @@ declare module '@tanstack/react-router' {
       path: '/projects'
       fullPath: '/projects'
       preLoaderRoute: typeof AuthenticatedProjectsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/notes': {
@@ -449,8 +512,37 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAgentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/projects/': {
+      id: '/_authenticated/projects/'
+      path: '/'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof AuthenticatedProjectsIndexRouteImport
+      parentRoute: typeof AuthenticatedProjectsRoute
+    }
+    '/_authenticated/projects/$projectId': {
+      id: '/_authenticated/projects/$projectId'
+      path: '/$projectId'
+      fullPath: '/projects/$projectId'
+      preLoaderRoute: typeof AuthenticatedProjectsProjectIdRouteImport
+      parentRoute: typeof AuthenticatedProjectsRoute
+    }
   }
 }
+
+interface AuthenticatedProjectsRouteChildren {
+  AuthenticatedProjectsProjectIdRoute: typeof AuthenticatedProjectsProjectIdRoute
+  AuthenticatedProjectsIndexRoute: typeof AuthenticatedProjectsIndexRoute
+}
+
+const AuthenticatedProjectsRouteChildren: AuthenticatedProjectsRouteChildren = {
+  AuthenticatedProjectsProjectIdRoute: AuthenticatedProjectsProjectIdRoute,
+  AuthenticatedProjectsIndexRoute: AuthenticatedProjectsIndexRoute,
+}
+
+const AuthenticatedProjectsRouteWithChildren =
+  AuthenticatedProjectsRoute._addFileChildren(
+    AuthenticatedProjectsRouteChildren,
+  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAgentsRoute: typeof AuthenticatedAgentsRoute
@@ -467,7 +559,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
   AuthenticatedMemoryRoute: typeof AuthenticatedMemoryRoute
   AuthenticatedNotesRoute: typeof AuthenticatedNotesRoute
-  AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRouteWithChildren
   AuthenticatedPromptsRoute: typeof AuthenticatedPromptsRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -489,7 +582,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
   AuthenticatedMemoryRoute: AuthenticatedMemoryRoute,
   AuthenticatedNotesRoute: AuthenticatedNotesRoute,
-  AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedProjectsRoute: AuthenticatedProjectsRouteWithChildren,
   AuthenticatedPromptsRoute: AuthenticatedPromptsRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
@@ -503,6 +597,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  UpdatePasswordRoute: UpdatePasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
