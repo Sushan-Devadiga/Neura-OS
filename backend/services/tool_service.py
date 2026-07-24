@@ -717,6 +717,34 @@ class ToolService:
             return {"status": "error", "error": "Missing required parameters: owner, repository, path"}
         return await self.trigger_workflow("get_file", {"owner": owner, "repository": repository, "path": path})
 
+    async def search_github_repo(self, query: str) -> dict:
+        """Search GitHub repositories by query."""
+        if not query:
+            return {"status": "error", "error": "Missing required parameter: query"}
+        return await self.trigger_workflow("search-github-repo", {"query": query})
+
+    # ------------------
+    # GOOGLE CALENDAR
+    # ------------------
+    async def create_calendar_event(self, summary: str, start_time: str, end_time: str, description: str = "") -> dict:
+        """
+        Create a new event in Google Calendar.
+        
+        Args:
+            summary: Title of the event.
+            start_time: Start time in ISO format (e.g. 2026-07-24T10:00:00Z).
+            end_time: End time in ISO format.
+            description: Optional description of the event.
+        """
+        if not summary or not start_time or not end_time:
+            return {"status": "error", "error": "Missing required parameters: summary, start_time, end_time"}
+        return await self.trigger_workflow("create-calendar-event", {
+            "summary": summary,
+            "description": description,
+            "start_time": start_time,
+            "end_time": end_time
+        })
+
     def get_tool_map(self):
         """
         Returns a mapping of tool names to their corresponding callable methods.
@@ -763,5 +791,7 @@ class ToolService:
             "create_issue_comment": self.create_issue_comment,
             "lock_issue": self.lock_issue,
             "edit_file": self.edit_file,
-            "get_file": self.get_file
+            "get_file": self.get_file,
+            "search_github_repo": self.search_github_repo,
+            "create_calendar_event": self.create_calendar_event
         }

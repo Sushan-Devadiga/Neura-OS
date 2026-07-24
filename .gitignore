@@ -31,3 +31,6 @@ dist-ssr
 *.sln
 *.sw?
 .lovable/
+.env
+**/__pycache__/
+*.pyc

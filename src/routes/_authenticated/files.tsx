@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ModulePage, ModuleHeader } from "@/components/os/ModulePage";
 import { supabase } from "@/integrations/supabase/client";
-import { Folder, File as FileIcon, Upload, Trash, Download, HardDrive, Loader2, ChevronRight, FileText, Image as ImageIcon, Video, Music, Archive, Search } from "lucide-react";
+import { Folder, File as FileIcon, Upload, Trash, Download, HardDrive, Loader2, ChevronRight, FileText, Image as ImageIcon, Video, Music, Archive, Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -59,9 +59,16 @@ function Page() {
     try {
       const { data, error } = await supabase.storage.listBuckets();
       if (error) throw error;
-      setBuckets(data || []);
-      if (data && data.length > 0 && !activeBucket) {
-        setActiveBucket(data[0].name);
+      
+      let fetchedBuckets = data || [];
+      // Fallback: If RLS on storage.buckets hides buckets, explicitly inject the 'files' bucket
+      if (fetchedBuckets.length === 0) {
+        fetchedBuckets = [{ id: 'files', name: 'files', public: false }];
+      }
+
+      setBuckets(fetchedBuckets);
+      if (fetchedBuckets.length > 0 && !activeBucket) {
+        setActiveBucket(fetchedBuckets[0].name);
       }
     } catch (err) {
       toast.error("Failed to load storage buckets");
@@ -176,9 +183,32 @@ function Page() {
     }
   };
 
+  const createBucket = async () => {
+    const name = prompt("New bucket name:");
+    if (!name) return;
+    
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.storage.createBucket(name.toLowerCase(), {
+        public: false,
+      });
+      if (error) throw error;
+      toast.success("Bucket created");
+      loadBuckets();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create bucket. You may need to create it in the Supabase Dashboard.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const createFolder = () => {
+    if (!activeBucket) {
+      toast.error("Please select or create a storage bucket first");
+      return;
+    }
     const name = prompt("Folder name:");
-    if (!name || !activeBucket) return;
+    if (!name) return;
     
     // Create an empty file to simulate a folder
     const prefix = currentPath.length > 0 ? `${currentPath.join('/')}/` : '';
@@ -229,7 +259,12 @@ function Page() {
         {/* Sidebar: Buckets */}
         <div className="w-64 shrink-0 space-y-6">
           <div className="bg-surface border border-border/50 rounded-2xl p-4">
-            <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wider mb-4 px-2">Storage Buckets</h3>
+            <div className="flex items-center justify-between mb-4 px-2">
+              <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Storage Buckets</h3>
+              <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-foreground" onClick={createBucket}>
+                <Plus className="h-3 w-3" />
+              </Button>
+            </div>
             <div className="space-y-1">
               {buckets.map(b => (
                 <button
@@ -277,7 +312,7 @@ function Page() {
                   className="pl-8 h-8 text-xs bg-background"
                 />
               </div>
-              <Button variant="outline" size="sm" className="h-8" onClick={createFolder}>
+              <Button variant="outline" size="sm" className="h-8" onClick={createFolder} disabled={!activeBucket}>
                 <Folder className="h-4 w-4 mr-2" /> New Folder
               </Button>
               <input type="file" ref={fileInputRef} className="hidden" onChange={handleUpload} />

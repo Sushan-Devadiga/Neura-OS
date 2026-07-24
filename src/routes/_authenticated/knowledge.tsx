@@ -10,6 +10,15 @@ import { toast } from "sonner";
 import ForceGraph2D from "react-force-graph-2d";
 import { useWindowSize } from "@/hooks/use-window-size";
 
+const NODE_COLORS: Record<string, string> = {
+  project: '#3b82f6', // blue-500
+  note: '#eab308',    // yellow-500
+  document: '#ef4444', // red-500
+  task: '#22c55e',    // green-500
+  memory: '#a855f7',  // purple-500
+  chat: '#06b6d4',    // cyan-500
+};
+
 export const Route = createFileRoute("/_authenticated/knowledge")({ component: Page });
 
 
@@ -71,9 +80,14 @@ function Page() {
     setIsLoading(true);
     try {
       const projectId = await getProjectId();
-      const data = await apiFetch(`/graph/${projectId}`);
+      const response = await apiFetch(`/graph/${projectId}`);
+      const data = response.data || response;
       if (data && data.nodes) {
-        setGraphData(data);
+        const rawLinks = data.edges || data.links || [];
+        setGraphData({
+          nodes: data.nodes,
+          links: rawLinks.map((l: any) => ({ ...l, source: l.source_id || l.source, target: l.target_id || l.target }))
+        });
       } else {
         setGraphData({ nodes: [], links: [] });
       }
@@ -139,22 +153,56 @@ function Page() {
   const nodeCanvasObject = (node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
     const label = node.name || node.label || node.id;
     const fontSize = 12/globalScale;
-    ctx.font = `${fontSize}px Sans-Serif`;
-    const textWidth = ctx.measureText(label).width;
-    const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2);
-
+    ctx.font = `${fontSize}px Inter, sans-serif`;
+    
     const isMatch = searchQuery && label.toLowerCase().includes(searchQuery.toLowerCase());
     const isSelected = selectedNode?.id === node.id;
+    const color = NODE_COLORS[node.entity_type] || '#888';
 
-    ctx.fillStyle = isSelected ? 'rgba(6, 182, 212, 0.8)' : isMatch ? 'rgba(234, 179, 8, 0.8)' : 'rgba(255, 255, 255, 0.1)';
-    ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, bckgDimensions[0], bckgDimensions[1]);
+    // Draw node circle
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, 5, 0, 2 * Math.PI, false);
+    ctx.fillStyle = color;
+    ctx.fill();
 
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = isSelected ? '#000' : isMatch ? '#000' : '#d4d4d8';
-    ctx.fillText(label, node.x, node.y);
+    // Draw selection/match ring
+    if (isSelected || isMatch) {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 8, 0, 2 * Math.PI, false);
+      ctx.strokeStyle = isSelected ? '#06b6d4' : '#eab308';
+      ctx.lineWidth = 1.5 / globalScale;
+      ctx.stroke();
+    }
 
-    node.__bckgDimensions = bckgDimensions; // to re-use in nodePointerAreaPaint
+    // Only draw labels if we're zoomed in, or if it's selected/matched
+    if (globalScale > 1.5 || isSelected || isMatch) {
+      const textWidth = ctx.measureText(label).width;
+      const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.5);
+
+      const rectX = node.x - bckgDimensions[0] / 2;
+      const rectY = node.y + 7;
+      
+      // We can't easily use roundRect in all environments, so we'll just use fillRect
+      // but if the browser supports it, roundRect is nicer.
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect(rectX, rectY, bckgDimensions[0], bckgDimensions[1], 2 / globalScale);
+        ctx.fill();
+      } else {
+        ctx.fillRect(rectX, rectY, bckgDimensions[0], bckgDimensions[1]);
+      }
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = color;
+      ctx.fillText(label, node.x, rectY + bckgDimensions[1] / 2);
+      
+      node.__bckgDimensions = bckgDimensions; // to re-use in nodePointerAreaPaint
+    } else {
+      // Small invisible box for hover detection when zoomed out
+      node.__bckgDimensions = [10, 10]; 
+    }
   };
 
   return (
@@ -207,18 +255,22 @@ function Page() {
               <p className="text-sm mt-2">Click "Sync Graph" to extract entities from your documents and notes.</p>
             </div>
           ) : (
-            <ForceGraph2D
-              ref={fgRef}
-              width={dimensions.width}
-              height={dimensions.height}
-              graphData={graphData}
-              nodeLabel={(node: any) => `${node.label || node.name || 'Entity'}\n${node.description || ''}`}
-              nodeColor={() => "#06b6d4"}
-              linkColor={() => "rgba(255,255,255,0.15)"}
-              linkDirectionalArrowLength={3.5}
-              linkDirectionalArrowRelPos={1}
-              onNodeClick={handleNodeClick}
-              nodeCanvasObject={nodeCanvasObject}
+            <>
+              <ForceGraph2D
+                ref={fgRef}
+                width={dimensions.width}
+                height={dimensions.height}
+                graphData={graphData}
+                nodeLabel={(node: any) => `${node.label || node.name || 'Entity'}\n${node.description || ''}`}
+                nodeColor={(node: any) => NODE_COLORS[node.entity_type] || "#888"}
+                linkColor={() => "rgba(255,255,255,0.15)"}
+                linkDirectionalArrowLength={3.5}
+                linkDirectionalArrowRelPos={1}
+                d3VelocityDecay={0.2}
+                warmupTicks={100}
+                cooldownTicks={100}
+                onNodeClick={handleNodeClick}
+                nodeCanvasObject={nodeCanvasObject}
               nodePointerAreaPaint={(node: any, color, ctx) => {
                 ctx.fillStyle = color;
                 const bckgDimensions = node.__bckgDimensions;
@@ -263,6 +315,16 @@ function Page() {
                 ctx.restore();
               }}
             />
+            {/* Legend */}
+            <div className="absolute bottom-6 left-6 flex flex-col gap-2 p-4 rounded-xl bg-background/80 backdrop-blur-md border shadow-sm pointer-events-none z-10">
+              <div className="font-semibold text-xs text-muted-foreground uppercase tracking-wider mb-1">Entity Types</div>
+              <div className="flex items-center gap-2 text-sm"><div className="w-3 h-3 rounded-full" style={{backgroundColor: NODE_COLORS.project}}></div> Project</div>
+              <div className="flex items-center gap-2 text-sm"><div className="w-3 h-3 rounded-full" style={{backgroundColor: NODE_COLORS.note}}></div> Notes</div>
+              <div className="flex items-center gap-2 text-sm"><div className="w-3 h-3 rounded-full" style={{backgroundColor: NODE_COLORS.document}}></div> Documents</div>
+              <div className="flex items-center gap-2 text-sm"><div className="w-3 h-3 rounded-full" style={{backgroundColor: NODE_COLORS.task}}></div> Tasks</div>
+              <div className="flex items-center gap-2 text-sm"><div className="w-3 h-3 rounded-full" style={{backgroundColor: NODE_COLORS.memory}}></div> Memories</div>
+            </div>
+            </>
           )}
 
           {selectedNode && (

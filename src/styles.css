@@ -259,6 +259,5 @@
   color: transparent;
   animation: gradient-shift 5s linear infinite;
 }
- 
- # l o v a b l e - b a d g e   {   d i s p l a y :   n o n e   ! i m p o r t a n t ;   }  
- 
+
+#lovable-badge, lovable-badge, [id^="lovable-"], [class*="lovable"] { display: none !important; }

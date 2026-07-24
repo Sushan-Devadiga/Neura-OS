@@ -137,3 +137,37 @@ class N8NService:
             execution_time = time.time() - start_time
             logger.error(f"read_inbox failed after {execution_time:.2f}s: {str(e)}")
             raise e
+
+    async def create_github_issue(self, owner: str, repo: str, title: str, body: str) -> Dict[str, Any]:
+        """Trigger n8n workflow to create a GitHub issue."""
+        logger.info(f"Executing create_github_issue for {owner}/{repo}: {title}")
+        return await self.trigger_workflow(
+            workflow="create-github-issue",
+            payload={
+                "owner": owner,
+                "repo": repo,
+                "title": title,
+                "body": body
+            }
+        )
+
+    async def search_github_repo(self, query: str) -> Dict[str, Any]:
+        """Trigger n8n workflow to search GitHub repositories."""
+        logger.info(f"Executing search_github_repo with query: {query}")
+        return await self.trigger_workflow(
+            workflow="search-github-repo",
+            payload={"query": query}
+        )
+
+    async def create_calendar_event(self, summary: str, description: str, start_time: str, end_time: str) -> Dict[str, Any]:
+        """Trigger n8n workflow to create a Google Calendar event."""
+        logger.info(f"Executing create_calendar_event: {summary}")
+        return await self.trigger_workflow(
+            workflow="create-calendar-event",
+            payload={
+                "summary": summary,
+                "description": description,
+                "start_time": start_time,
+                "end_time": end_time
+            }
+        )
